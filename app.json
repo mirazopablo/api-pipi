@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "scheme": "acme",
+    "plugins": [
+      "expo-router",
+      "expo-sqlite"
+    ],
+    "name": "api-pipi",
+    "slug": "api-pipi",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b60a8b2d-9f39-46cc-9f1c-829ca9f4ada9"
+      }
+    },
+    "android": {
+      "package": "com.d3xtro12.apipipi"
+    }
+  }
+}
