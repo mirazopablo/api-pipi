@@ -1,3 +1,4 @@
+//app/index.tsx
 import React from 'react';
 import {
   View,
@@ -30,22 +31,6 @@ export default function HomePage() {
       color: '#2196F3',
       route: '/productos/buscar'
     },
-    {
-      id: 'crear-proveedor',
-      title: 'Crear Proveedor',
-      subtitle: 'Agregar nuevo proveedor',
-      icon: 'person-add' as keyof typeof Ionicons.glyphMap,
-      color: '#FF9800',
-      route: '/proveedores/crear'
-    },
-    {
-      id: 'buscar-proveedor',
-      title: 'Buscar Proveedor',
-      subtitle: 'Ver y editar proveedores',
-      icon: 'people' as keyof typeof Ionicons.glyphMap,
-      color: '#9C27B0',
-      route: '/proveedores/buscar'
-    }
   ];
 
   const handleNavigation = (route: string) => {
@@ -97,7 +82,7 @@ export default function HomePage() {
       {/* Footer Info */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>
-          2025 © Viking-Labs - Todos los derechos reservados
+          2025 © Pablo Mirazo AKA D3XTRO - Todos los derechos reservados
         </Text>
       </View>
     </SafeAreaView>
