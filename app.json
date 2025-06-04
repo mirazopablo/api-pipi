@@ -6,7 +6,7 @@
       "expo-sqlite"
     ],
     "name": "PIPI-APP",
-    "slug": "PIPI-APP",
+    "slug": "api-pipi",
     "icon": "./assets/icon.png",
 
     "extra": {
@@ -16,8 +16,9 @@
       }
     },
     "android": {
-      "package": "com.d3xtro12.pipiapp",
+      "package": "com.d3xtro12.apipipi",
       "icon": "./assets/icon.png"
+
     }
   }
 }
