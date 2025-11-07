@@ -28,6 +28,13 @@ export default function RootLayout() {
             headerShown: false 
           }} 
         />
+        <Stack.Screen 
+          name="productos/editar" 
+          options={{ 
+            title: 'Editar Producto',
+            headerShown: false 
+          }} 
+        />
       </Stack>
     </PaperProvider>
   );

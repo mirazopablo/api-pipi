@@ -84,18 +84,26 @@ const CrearProducto = () => {
     }));
   };
 
-    const handleModeChange = (mode: string) => {
+  const handleModeChange = (mode: string) => {
     setCalculationMode(mode);
-    setFormData(prev => ({
+    // Limpiar solo el campo que no se usa en el nuevo modo
+    if (mode === 'precio') {
+      // En modo precio, limpiar margen
+      setFormData(prev => ({
         ...prev,
-        ...(mode === 'precio' ? { margen: '', publico: prev.publico } : { publico: '', margen: prev.margen }),
-    }));
-    };
-
+        margen: ''
+      }));
+    } else {
+      // En modo margen, limpiar publico para que se recalcule automáticamente
+      setFormData(prev => ({
+        ...prev,
+        publico: ''
+      }));
+    }
+  };
 
   const validateForm = () => {
     const { nombre, costo, publico, margen } = formData;
-
 
     if (!nombre.trim()) {
       Alert.alert('Error', 'El nombre del producto es requerido');
@@ -132,6 +140,7 @@ const CrearProducto = () => {
         return false;
       }
     } else {
+      // Modo margen
       if (!margen.trim()) {
         Alert.alert('Error', 'El margen de ganancia es requerido');
         return false;
@@ -145,6 +154,11 @@ const CrearProducto = () => {
       }
 
       // Validar que el precio público calculado sea válido
+      if (!publico || publico.trim() === '') {
+        Alert.alert('Error', 'No se pudo calcular el precio público. Verifica el costo y el margen.');
+        return false;
+      }
+
       const publicoCalculado = parseFloat(publico);
       if (isNaN(publicoCalculado) || publicoCalculado <= costoNum) {
         Alert.alert('Error', 'El margen resulta en un precio público inválido');
@@ -155,59 +169,69 @@ const CrearProducto = () => {
     return true;
   };
 
-const handleSubmit = async () => {
-  if (!dbInitialized) {
-    Alert.alert('Error', 'La base de datos no está lista');
-    return;
-  }
-
-  if (!validateForm()) return;
-
-  setLoading(true);
-
-  try {
-    const { nombre, costo, publico } = formData;
-
-    const costoInt = Math.round(parseFloat(costo) * 100);
-    const publicoFloat = parseFloat(publico);
-
-    if (isNaN(publicoFloat) || publicoFloat <= 0) {
-      throw new Error('El precio público es inválido o no se calculó correctamente');
+  const handleSubmit = async () => {
+    if (!dbInitialized) {
+      Alert.alert('Error', 'La base de datos no está lista');
+      return;
     }
 
-    const publicoInt = Math.round(publicoFloat * 100);
+    if (!validateForm()) return;
 
-    const result = await databaseManager.createProducto(
-      nombre.trim(),
-      costoInt,
-      publicoInt
-    );
+    setLoading(true);
 
-    if (result.success) {
-      Alert.alert(
-        'Éxito',
-        'Producto creado exitosamente',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              setFormData({ nombre: '', costo: '', publico: '', margen: '' });
-              router.back();
-            },
-          },
-        ]
+    try {
+      const { nombre, costo, publico } = formData;
+
+      // Convertir costo de pesos a centavos
+      const costoInt = Math.round(parseFloat(costo) * 100);
+      
+      // Validar que publico tenga valor antes de parsearlo
+      if (!publico || publico.trim() === '') {
+        throw new Error('El precio público no está calculado correctamente');
+      }
+
+      const publicoFloat = parseFloat(publico);
+
+      if (isNaN(publicoFloat) || publicoFloat <= 0) {
+        throw new Error('El precio público es inválido o no se calculó correctamente');
+      }
+
+      // Convertir público de pesos a centavos
+      const publicoInt = Math.round(publicoFloat * 100);
+
+      console.log('Creando producto:', { nombre: nombre.trim(), costoInt, publicoInt });
+
+      const result = await databaseManager.createProducto(
+        nombre.trim(),
+        costoInt,
+        publicoInt
       );
-    } else {
-      Alert.alert('Error', result.message || 'Error al crear el producto');
-    }
-  } catch (error) {
-    Alert.alert('Error', error.message || 'Ocurrió un error inesperado al crear el producto');
-  } finally {
-    setLoading(false);
-  }
-};
 
-//aca termina handle submit
+      if (result.success) {
+        Alert.alert(
+          'Éxito',
+          'Producto creado exitosamente',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                setFormData({ nombre: '', costo: '', publico: '', margen: '' });
+                router.back();
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert('Error', result.message || 'Error al crear el producto');
+      }
+    } catch (error) {
+      console.error('Error al crear producto:', error);
+      Alert.alert('Error', error.message || 'Ocurrió un error inesperado al crear el producto');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCancel = () => {
     Alert.alert(
       'Cancelar',

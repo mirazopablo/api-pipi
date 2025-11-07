@@ -31,6 +31,7 @@ export default function HomePage() {
       color: '#2196F3',
       route: '/productos/buscar'
     },
+  
   ];
 
   const handleNavigation = (route: string) => {
@@ -43,7 +44,7 @@ export default function HomePage() {
       
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>PIPI-APP</Text>
+        <Text style={styles.title}>Margarita Deco-Hogar</Text>
       </View>
 
       {/* Menu Grid */}
@@ -95,8 +96,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   header: {
+    marginTop: 50,
     paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingVertical: 50,
     alignItems: 'center',
   },
   title: {
@@ -104,6 +106,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1a1a1a',
     marginBottom: 4,
+    paddingVertical: 15,
   },
   subtitle: {
     fontSize: 16,

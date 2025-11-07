@@ -7,7 +7,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  FlatList,
   ActivityIndicator,
   Alert,
   RefreshControl,
@@ -16,17 +15,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { FlashList } from '@shopify/flash-list';
+import { Producto } from '../../types';
 import databaseManager from '../../DatabaseManager';
-
-interface Producto {
-  id: number;
-  cod: string;
-  nombre: string;
-  costo: number;
-  publico: number;
-  created_at: string;
-  updated_at: string;
-}
 
 const BuscarProductos = () => {
   const router = useRouter();
@@ -36,6 +27,7 @@ const BuscarProductos = () => {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [totalProductos, setTotalProductos] = useState(0);
+  const [modoCliente, setModoCliente] = useState(false);
 
   // Inicializar la base de datos
   useEffect(() => {
@@ -51,7 +43,7 @@ const BuscarProductos = () => {
     initializeDatabase();
   }, []);
 
-  // Cargar todos los productos
+  // Cargar todos los productos desde DatabaseManager
   const loadProductos = useCallback(async () => {
     if (!dbInitialized) return;
 
@@ -60,17 +52,17 @@ const BuscarProductos = () => {
       const result = await databaseManager.getAllProductos();
       if (result.success) {
         setProductos(result.data);
+        setTotalProductos(result.data.length);
       } else {
         Alert.alert('Error', 'No se pudieron cargar los productos');
-      }
-
-      // Obtener el conteo total
-      const countResult = await databaseManager.getProductosCount();
-      if (countResult.success) {
-        setTotalProductos(countResult.count);
+        setProductos([]);
+        setTotalProductos(0);
       }
     } catch (error) {
+      console.error('Error loading productos:', error);
       Alert.alert('Error', 'Ocurrió un error al cargar los productos');
+      setProductos([]);
+      setTotalProductos(0);
     } finally {
       setLoading(false);
     }
@@ -87,12 +79,11 @@ const BuscarProductos = () => {
           // Si no hay búsqueda, cargar todos los productos
           loadProductos();
         }
-        
       }
     }, [dbInitialized, searchTerm, loadProductos])
   );
 
-  // Buscar productos por nombre
+  // Buscar productos por nombre usando DatabaseManager
   const searchProductos = async (term: string) => {
     if (!dbInitialized) return;
 
@@ -108,9 +99,12 @@ const BuscarProductos = () => {
         setProductos(result.data);
       } else {
         Alert.alert('Error', 'No se pudo realizar la búsqueda');
+        setProductos([]);
       }
     } catch (error) {
+      console.error('Error searching productos:', error);
       Alert.alert('Error', 'Ocurrió un error durante la búsqueda');
+      setProductos([]);
     } finally {
       setLoading(false);
     }
@@ -133,6 +127,11 @@ const BuscarProductos = () => {
     loadProductos();
   };
 
+  // Toggle modo cliente
+  const toggleModoCliente = () => {
+    setModoCliente(prev => !prev);
+  };
+
   // Refresh pull-to-refresh
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -145,8 +144,8 @@ const BuscarProductos = () => {
   }, [searchTerm, dbInitialized, loadProductos]);
 
   // Formatear precio (convertir de centavos a pesos)
-  const formatPrice = (price: number) => {
-    return (price / 100).toFixed(2);
+  const formatPrice = (priceInCents: number) => {
+    return (priceInCents / 100).toFixed(2);
   };
 
   // Calcular margen de ganancia
@@ -155,8 +154,13 @@ const BuscarProductos = () => {
     return ((publico - costo) / costo * 100);
   };
 
-  // Confirmar eliminación de producto
-  const confirmarEliminar = (producto: Producto) => {
+  // Navegar a editar producto
+  const handleEditarProducto = (producto: Producto) => {
+    router.push(`/productos/editar?id=${producto.id}` as any);
+  };
+
+  // Confirmar y eliminar producto
+  const handleEliminarProducto = (producto: Producto) => {
     Alert.alert(
       'Eliminar Producto',
       `¿Estás seguro de que deseas eliminar "${producto.nombre}"?`,
@@ -174,12 +178,15 @@ const BuscarProductos = () => {
     );
   };
 
-  // Eliminar producto
+  // Eliminar producto usando DatabaseManager
   const eliminarProducto = async (id: number) => {
+    setLoading(true);
     try {
       const result = await databaseManager.deleteProducto(id);
       if (result.success) {
         Alert.alert('Éxito', 'Producto eliminado correctamente');
+        
+        // Recargar lista
         if (searchTerm.trim()) {
           searchProductos(searchTerm);
         } else {
@@ -189,7 +196,10 @@ const BuscarProductos = () => {
         Alert.alert('Error', result.message || 'No se pudo eliminar el producto');
       }
     } catch (error) {
+      console.error('Error deleting producto:', error);
       Alert.alert('Error', 'Ocurrió un error al eliminar el producto');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -198,35 +208,55 @@ const BuscarProductos = () => {
     <View style={styles.productCard}>
       <View style={styles.productHeader}>
         <View style={styles.productInfo}>
-          <Text style={styles.productCode}>{item.cod}</Text>
           <Text style={styles.productName}>{item.nombre}</Text>
         </View>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => confirmarEliminar(item)}
-        >
-          <Ionicons name="trash-outline" size={20} color="#ff4444" />
-        </TouchableOpacity>
+        {!modoCliente && (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => handleEditarProducto(item)}
+            >
+              <Ionicons name="create-outline" size={20} color="#007AFF" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleEliminarProducto(item)}
+            >
+              <Ionicons name="trash-outline" size={20} color="#ff4444" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
-      <View style={styles.priceContainer}>
-        <View style={styles.priceItem}>
-          <Text style={styles.priceLabel}>Costo:</Text>
-          <Text style={styles.priceValue}>${formatPrice(item.costo)}</Text>
-        </View>
-        <View style={styles.priceItem}>
-          <Text style={styles.priceLabel}>Público:</Text>
-          <Text style={[styles.priceValue, styles.publicPrice]}>
+      {modoCliente ? (
+        // Modo Cliente: Solo precio de venta destacado
+        <View style={styles.clientePriceContainer}>
+          <Text style={styles.clientePriceLabel}>Precio</Text>
+          <Text style={styles.clientePriceValue}>
             ${formatPrice(item.publico)}
           </Text>
         </View>
-        <View style={styles.priceItem}>
-          <Text style={styles.priceLabel}>Margen:</Text>
-          <Text style={[styles.priceValue, styles.marginValue]}>
-            {calcularMargen(item.costo, item.publico).toFixed(1)}%
-          </Text>
+      ) : (
+        // Modo Normal: Todos los precios
+        <View style={styles.priceContainer}>
+          <View style={styles.priceItem}>
+            <Text style={styles.priceLabel}>Costo:</Text>
+            <Text style={styles.priceValue}>${formatPrice(item.costo)}</Text>
+          </View>
+          <View style={styles.priceItem}>
+            <Text style={styles.priceLabel}>Público:</Text>
+            <Text style={[styles.priceValue, styles.publicPrice]}>
+              ${formatPrice(item.publico)}
+            </Text>
+          </View>
+          <View style={styles.priceItem}>
+            <Text style={styles.priceLabel}>Margen:</Text>
+            <Text style={[styles.priceValue, styles.marginValue]}>
+              {calcularMargen(item.costo, item.publico).toFixed(1)}%
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 
@@ -243,7 +273,7 @@ const BuscarProductos = () => {
           : 'Comienza creando tu primer producto'
         }
       </Text>
-      {!searchTerm && (
+      {!searchTerm && !modoCliente && (
         <TouchableOpacity
           style={styles.createButton}
           onPress={() => router.push('/productos/crear' as any)}
@@ -269,10 +299,24 @@ const BuscarProductos = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Productos</Text>
-        <Text style={styles.subtitle}>
-          {totalProductos} producto{totalProductos !== 1 ? 's' : ''} total{totalProductos !== 1 ? 'es' : ''}
-        </Text>
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.title}>Productos</Text>
+            <Text style={styles.subtitle}>
+              {totalProductos} producto{totalProductos !== 1 ? 's' : ''} total{totalProductos !== 1 ? 'es' : ''}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.eyeButton, modoCliente && styles.eyeButtonActive]}
+            onPress={toggleModoCliente}
+          >
+            <Ionicons 
+              name={modoCliente ? "eye-off" : "eye-outline"} 
+              size={24} 
+              color={modoCliente ? "#fff" : "#007AFF"} 
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Barra de búsqueda */}
@@ -295,18 +339,17 @@ const BuscarProductos = () => {
         </View>
       </View>
 
-      {/* Lista de productos */}
-      <FlatList
+      {/* Lista de productos con FlashList */}
+      <FlashList
         data={productos}
         renderItem={renderProducto}
         keyExtractor={(item) => item.id.toString()}
-        style={styles.list}
-        contentContainerStyle={productos.length === 0 ? styles.listEmpty : undefined}
         ListEmptyComponent={!loading ? renderEmpty : null}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
       />
 
       {/* Loading overlay */}
@@ -317,12 +360,14 @@ const BuscarProductos = () => {
       )}
 
       {/* Botón flotante para crear producto */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push('/productos/crear' as any)}
-      >
-        <Ionicons name="add" size={24} color="#fff" />
-      </TouchableOpacity>
+      {!modoCliente && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => router.push('/productos/crear' as any)}
+        >
+          <Ionicons name="add" size={24} color="#fff" />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 };
@@ -349,6 +394,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flex: 1,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -358,6 +411,15 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#666',
+  },
+  eyeButton: {
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#f0f7ff',
+    marginLeft: 12,
+  },
+  eyeButtonActive: {
+    backgroundColor: '#28a745',
   },
   searchContainer: {
     backgroundColor: '#fff',
@@ -385,15 +447,12 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 4,
   },
-  list: {
-    flex: 1,
-  },
-  listEmpty: {
-    flexGrow: 1,
+  listContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   productCard: {
     backgroundColor: '#fff',
-    marginHorizontal: 16,
     marginVertical: 8,
     padding: 16,
     borderRadius: 8,
@@ -415,16 +474,19 @@ const styles = StyleSheet.create({
   productInfo: {
     flex: 1,
   },
-  productCode: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
-    marginBottom: 4,
-  },
   productName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  editButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: '#f0f7ff',
   },
   deleteButton: {
     padding: 8,
@@ -454,11 +516,32 @@ const styles = StyleSheet.create({
   marginValue: {
     color: '#28a745',
   },
+  clientePriceContainer: {
+    backgroundColor: '#f0f7ff',
+    borderRadius: 8,
+    padding: 20,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  clientePriceLabel: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '600',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  clientePriceValue: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
+    minHeight: 400,
   },
   emptyTitle: {
     fontSize: 20,

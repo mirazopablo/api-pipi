@@ -8,6 +8,7 @@
     "name": "Margarita Deco Hogar",
     "slug": "api-pipi",
     "icon": "./assets/icon.png",
+    "version": "1.1.0",
 
     "extra": {
       "router": {},
@@ -17,8 +18,8 @@
     },
     "android": {
       "package": "com.d3xtro12.apipipi",
-      "icon": "./assets/icon.png"
-
+      "icon": "./assets/icon.png",
+      "versionCode": 6
     }
   }
 }

@@ -10,20 +10,58 @@ class DatabaseManager {
     try {
       this.db = await SQLite.openDatabaseAsync('productos.db');
 
-      // Verificar si existe la columna cod y reiniciar base si es necesario
+      // Verificar si existe la columna cod y hacer migración segura
       const checkColumnQuery = `PRAGMA table_info(productos);`;
       const columns = await this.db.getAllAsync(checkColumnQuery);
 
       const hasCodColumn = columns.some(col => col.name === 'cod');
+      
       if (hasCodColumn) {
-        console.warn('La columna cod existe, se procederá a eliminar la tabla y crearla de nuevo.');
-        await this.db.runAsync(`DROP TABLE IF EXISTS productos;`);
+        console.log('Migración detectada: eliminando columna cod de forma segura...');
+        await this.migrateRemoveCodColumn();
+      } else {
+        // Si la tabla no existe o no tiene la columna cod, crearla normalmente
+        await this.createTables();
       }
-
-      await this.createTables();
-      console.log('Base de datos inicializada correctamente');
     } catch (error) {
       console.error('Error al inicializar la base de datos:', error);
+      throw error;
+    }
+  }
+
+  // Migración segura: eliminar columna cod sin perder datos
+  async migrateRemoveCodColumn() {
+    try {
+      console.log('Iniciando migración segura...');
+      
+      // 1. Crear tabla temporal con el nuevo esquema (sin cod)
+      await this.db.execAsync(`
+        CREATE TABLE IF NOT EXISTS productos_temp (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          nombre TEXT NOT NULL,
+          costo INTEGER NOT NULL,
+          publico INTEGER NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      // 2. Copiar todos los datos de la tabla antigua a la nueva (sin la columna cod)
+      await this.db.execAsync(`
+        INSERT INTO productos_temp (id, nombre, costo, publico, created_at, updated_at)
+        SELECT id, nombre, costo, publico, created_at, updated_at
+        FROM productos;
+      `);
+
+      // 3. Eliminar la tabla antigua
+      await this.db.execAsync(`DROP TABLE productos;`);
+
+      // 4. Renombrar la tabla temporal al nombre original
+      await this.db.execAsync(`ALTER TABLE productos_temp RENAME TO productos;`);
+
+      console.log('Migración completada exitosamente. Datos preservados.');
+    } catch (error) {
+      console.error('Error durante la migración:', error);
       throw error;
     }
   }
@@ -111,8 +149,6 @@ class DatabaseManager {
       };
     }
   }
-
-  // 🔥 Eliminado: getProductoByCod()
 
   async searchProductosByNombre(searchTerm) {
     const query = `
