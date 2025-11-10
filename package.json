@@ -1,85 +1,44 @@
 {
-
-"name": "api-pipi",
-
-"version": "1.1.0",
-
-"main": "expo-router/entry",
-
-"scripts": {
-
-"start": "expo start",
-
-"android": "expo start --android",
-
-"ios": "expo start --ios",
-
-"web": "expo start --web",
-
-"deploy": "npx expo export -p web && npx eas-cli@latest deploy"
-
-},
-
-"dependencies": {
-
-"@react-native-picker/picker": "^2.11.4",
-
-"@shopify/flash-list": "^2.2.0",
-
-"@types/uuid": "^10.0.0",
-
-"expo": "~54.0.22",
-
-"expo-constants": "~17.1.4",
-
-"expo-dev-client": "~5.1.8",
-
-"expo-file-system": "~18.1.10",
-
-"expo-image-picker": "~16.1.4",
-
-"expo-linking": "~7.1.4",
-
-"expo-router": "~5.1.7",
-
-"expo-splash-screen": "~0.30.7",
-
-"expo-sqlite": "~15.2.14",
-
-"expo-status-bar": "~2.2.3",
-
-"react": "18.2.0",
-
-"react-dom": "18.2.0",
-
-"react-native": "0.74.3",
-
-"react-native-gesture-handler": "~2.24.0",
-
-"react-native-paper": "^5.14.5",
-
-"react-native-safe-area-context": "^5.4.0",
-
-"react-native-screens": "~4.10.0",
-
-"react-native-vector-icons": "^10.2.0",
-
-"react-native-web": "^0.20.0",
-
-"uuid": "^11.1.0"
-
-},
-
-"devDependencies": {
-
-"@babel/core": "^7.20.0",
-
-"@types/react": "~18.2.79",
-
-"typescript": "~5.8.3"
-
-},
-
-"private": true
-
+  "name": "api-pipi",
+  "version": "1.1.0",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "deploy": "npx expo export -p web && npx eas-cli@latest deploy"
+  },
+  "dependencies": {
+    "@expo/config": "~12.0.7",
+    "@react-native-picker/picker": "^2.11.4",
+    "@shopify/flash-list": "^2.2.0",
+    "expo": "~54.0.22",
+    "expo-constants": "~18.0.10",
+    "expo-dev-client": "~6.0.17",
+    "expo-file-system": "~18.1.10",
+    "expo-image-picker": "~16.1.4",
+    "expo-linking": "~7.1.4",
+    "expo-router": "~5.1.7",
+    "expo-splash-screen": "~0.30.7",
+    "expo-sqlite": "~15.2.14",
+    "expo-status-bar": "~2.2.3",
+    "react": "18.2.0",             
+    "react-dom": "18.2.0",         
+    "react-native": "0.74.3",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-paper": "^5.14.5",
+    "react-native-safe-area-context": "^5.4.0",
+    "react-native-screens": "~4.10.0",
+    "react-native-vector-icons": "^10.2.0",
+    "react-native-web": "^0.20.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@types/react": "~18.2.79",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.8.3"
+  },
+  "private": true
 }
