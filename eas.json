@@ -8,10 +8,6 @@
       "developmentClient": true,
       "distribution": "internal"
     },
-    "test_clean": { 
-      "extends": "production",
-      "cache": { "disabled": true } 
-    },
     "preview": {
       "distribution": "internal"
     },
