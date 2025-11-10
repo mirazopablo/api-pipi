@@ -19,7 +19,8 @@
     "android": {
       "package": "com.d3xtro12.apipipi",
       "icon": "./assets/icon.png",
-      "versionCode": 6
+      "versionCode": 6,
+      "newArchitecture": false
     }
   }
 }
