@@ -10,27 +10,17 @@
       "android": {
         "gradleCommand": ":app:assembleDebug",
         "buildType": "apk"
-      },
-      "env": {
-        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m"
       }
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "env": {
-        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m"
       }
     },
     "production": {
-      "autoIncrement": true,
       "android": {
-        "buildType": "app-bundle"
-      },
-      "env": {
-        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m"
+        "buildType": "apk"
       }
     }
   },
