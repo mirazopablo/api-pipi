@@ -2,43 +2,45 @@
 
 set -euo pipefail
 
-echo "🔧 Parcheando archivos de Gradle para desactivar -Werror y fijar versión de Kotlin..."
+echo "🔧 Buscando y parcheando archivos de Kotlin..."
 
-# Parchear react-native-gradle-plugin
-REACT_NATIVE_GRADLE_FILE="node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/build.gradle.kts"
+# Buscar todos los archivos que contengan el error
+FILES=$(grep -rl "is missing in the map" node_modules/ 2>/dev/null || true)
 
-if [ -f "$REACT_NATIVE_GRADLE_FILE" ]; then
-    echo "Parcheando $REACT_NATIVE_GRADLE_FILE"
-    if grep -q "allWarningsAsErrors = true" "$REACT_NATIVE_GRADLE_FILE"; then
-        sed -i.bak 's/allWarningsAsErrors = true/allWarningsAsErrors = false/g' "$REACT_NATIVE_GRADLE_FILE"
-        echo "✅ Parche aplicado exitosamente"
-    fi
-fi
+if [ -z "$FILES" ]; then
+    echo "⚠️  No se encontraron archivos con el error específico"
 
-# Parchear expo-gradle-plugins
-for GRADLE_FILE in node_modules/expo-modules-*/android/**/build.gradle.kts; do
-    if [ -f "$GRADLE_FILE" ] && grep -q "allWarningsAsErrors" "$GRADLE_FILE"; then
-        echo "Parcheando $GRADLE_FILE"
-        sed -i.bak 's/allWarningsAsErrors = true/allWarningsAsErrors = false/g' "$GRADLE_FILE"
-    fi
-done
+    # Buscar archivos KotlinVersion
+    KOTLIN_FILES=$(find node_modules -name "*KotlinVersion*" -type f 2>/dev/null || true)
 
-# Parchear versiones de Kotlin en expo-gradle-plugin
-KOTLIN_VERSIONS_FILE="node_modules/expo-modules-autolinking/android/expo-gradle-plugin/gradle-plugin/src/main/kotlin/expo/modules/plugin/configuration/KotlinVersion.kt"
+    if [ -n "$KOTLIN_FILES" ]; then
+        echo "📝 Archivos encontrados relacionados con KotlinVersion:"
+        echo "$KOTLIN_FILES"
 
-if [ -f "$KOTLIN_VERSIONS_FILE" ]; then
-    echo "Parcheando $KOTLIN_VERSIONS_FILE para agregar Kotlin 1.9.24"
-
-    # Buscar la línea que contiene el mapOf con las versiones
-    if grep -q '"1.9.23" to KotlinVersion' "$KOTLIN_VERSIONS_FILE"; then
-        # Agregar la versión 1.9.24 después de 1.9.23
-        sed -i.bak '/"1.9.23" to KotlinVersion/a\    "1.9.24" to KotlinVersion(1, 9, 24),' "$KOTLIN_VERSIONS_FILE"
-        echo "✅ Kotlin 1.9.24 agregado exitosamente"
-    else
-        echo "⚠️  No se encontró el patrón esperado en KotlinVersion.kt"
+        # Intentar parchear cada archivo encontrado
+        for FILE in $KOTLIN_FILES; do
+            if [[ $FILE == *.kt ]]; then
+                echo "Intentando parchear: $FILE"
+                # Buscar línea con 1.9.23 y agregar 1.9.24 después
+                if grep -q "1.9.23" "$FILE"; then
+                    sed -i.bak '/1.9.23/a\  "1.9.24" to KotlinVersion(1, 9, 24),' "$FILE" 2>/dev/null || true
+                    echo "✅ Parche aplicado a $FILE"
+                fi
+            fi
+        done
     fi
 else
-    echo "⚠️  Archivo no encontrado: $KOTLIN_VERSIONS_FILE"
+    echo "📝 Archivos encontrados con el error:"
+    echo "$FILES"
+
+    for FILE in $FILES; do
+        echo "Parcheando: $FILE"
+        # Buscar y agregar versión 1.9.24
+        if grep -q "1.9.23" "$FILE"; then
+            sed -i.bak '/1.9.23/a\  "1.9.24" to KotlinVersion(1, 9, 24),' "$FILE" 2>/dev/null || true
+            echo "✅ Parche aplicado a $FILE"
+        fi
+    done
 fi
 
-echo "✅ Parches de Gradle completados"
+echo "✅ Proceso de parche completado"
