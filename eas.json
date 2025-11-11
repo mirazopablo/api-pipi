@@ -12,7 +12,8 @@
         "buildType": "apk"
       },
       "env": {
-        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4096m"
+        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4096m",
+        "KOTLIN_VERSION": "1.9.23"
       }
     },
     "preview": {
@@ -21,7 +22,8 @@
         "buildType": "apk"
       },
       "env": {
-        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4096m"
+        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4096m",
+        "KOTLIN_VERSION": "1.9.23"
       }
     },
     "production": {
@@ -30,7 +32,8 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4096m"
+        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4096m",
+        "KOTLIN_VERSION": "1.9.23"
       }
     }
   },
