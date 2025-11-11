@@ -3,10 +3,13 @@
     "scheme": "acme",
     "plugins": [
       "expo-router",
+      "expo-sqlite",
       [
-        "expo-sqlite",
+        "expo-build-properties",
         {
-          "enableFTS": false
+          "android": {
+            "kotlinVersion": "1.9.24"
+          }
         }
       ]
     ],
@@ -28,9 +31,6 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       }
-    },
-    "web": {
-      "bundler": "metro"
     }
   }
 }
